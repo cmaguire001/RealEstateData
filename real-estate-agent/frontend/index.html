@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MSP North Metro Market Signals</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #222; }
+      .meta { margin-bottom: 16px; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1000px; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
+      canvas { width: 100%; height: 300px; }
+    </style>
+  </head>
+  <body>
+    <h1>MSP North Metro Market Signals</h1>
+    <div class="meta">
+      <div><strong>City:</strong> <span id="city-name">MSP North Metro</span></div>
+      <div><strong>Last update:</strong> <span id="last-update">-</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><canvas id="listingsChart"></canvas></div>
+      <div class="card"><canvas id="avgPriceChart"></canvas></div>
+      <div class="card"><canvas id="ppsfChart"></canvas></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

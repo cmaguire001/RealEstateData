@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+.cache/
+data/local_store/

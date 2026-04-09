@@ -11,22 +11,29 @@ from typing import Any
 from db import get_history
 
 
-def export_history_json(city: str, export_path: str, limit: int = 30) -> list[dict[str, Any]]:
-    rows = get_history(city=city, limit=limit)
-    rows = list(reversed(rows))
-
-    payload: list[dict[str, Any]] = []
-    for row in rows:
-        payload.append(
+def export_history_json(cities: tuple[str, ...], export_path: str, limit: int = 30) -> dict[str, Any]:
+    series: dict[str, list[dict[str, Any]]] = {}
+    for city in cities:
+        rows = get_history(city=city, limit=limit)
+        rows = list(reversed(rows))
+        series[city] = [
             {
                 "timestamp": _to_iso(row.get("timestamp")),
+                "city": city,
                 "total_listings": _to_int(row.get("total_listings")),
                 "avg_price": _to_float(row.get("avg_price")),
                 "avg_price_per_sqft": _to_float(row.get("avg_price_per_sqft")),
                 "inventory_growth": _to_float(row.get("inventory_growth")),
                 "status": row.get("status"),
             }
-        )
+            for row in rows
+        ]
+
+    payload = {
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "cities": list(cities),
+        "series": series,
+    }
 
     out = Path(export_path)
     out.parent.mkdir(parents=True, exist_ok=True)

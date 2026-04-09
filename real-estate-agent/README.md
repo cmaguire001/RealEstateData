@@ -1,5 +1,109 @@
 # Real Estate Market Signal Agent (MVP)
 
+Deterministic ETL for **MSP north-metro** listings, persisted to Neon/Postgres and exported to a static dashboard payload.
+
+## Security-first secret handling (recommended)
+
+### Local
+1. Copy template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Put your real `DATABASE_URL` in `.env`.
+3. `.env` is ignored by git, so it will not be committed.
+
+### GitHub Actions
+- Store `DATABASE_URL` in **GitHub Actions Secrets** (`Settings → Secrets and variables → Actions`).
+- Workflow consumes `${{ secrets.DATABASE_URL }}` directly.
+- Never commit connection strings to repo files.
+
+> If a real connection string was ever pasted in chat/history, rotate credentials in Neon.
+
+---
+
+## Scope: Cities covered
+
+Current configured city-level snapshots include:
+
+- Andover
+- Anoka
+- Big Lake
+- Blaine
+- Champlin
+- Coon Rapids
+- Dayton
+- Elk River
+- Fridley
+- Ham Lake
+- Lino Lakes
+- Mounds View
+- Nowthen
+- Oak Grove
+- Ramsey
+- Spring Lake Park
+- Zimmerman
+
+---
+
+## Run locally
+
+```bash
+cd real-estate-agent
+python -m unittest discover -s tests -v
+python -m src.smoke
+python src/runner.py
+```
+
+`src/runner.py` exits safely if `DATABASE_URL` is missing.
+
+---
+
+## Data flow
+
+1. Fetch Realtor.com public-facing search pages (no browser automation).
+2. Normalize rows into `{price, sqft, beds, baths}`.
+3. Compute city-level metrics and deterministic signals.
+4. Insert one snapshot per city.
+5. Export `frontend/data.json` with city-level series.
+
+---
+
+## JSON export contract (`frontend/data.json`)
+
+```json
+{
+  "generated_at": "2026-04-09T00:00:00Z",
+  "cities": ["Andover", "Blaine"],
+  "series": {
+    "Andover": [
+      {
+        "timestamp": "2026-04-09T00:00:00",
+        "city": "Andover",
+        "total_listings": 120,
+        "avg_price": 410000,
+        "avg_price_per_sqft": 210,
+        "inventory_growth": 0.08,
+        "status": "stable"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## CI schedule
+
+Workflow: `.github/workflows/pipeline.yml`
+
+- every 4 hours
+- manual dispatch enabled
+- runs `python src/runner.py`
+- commits updated `frontend/data.json` when changed
+
+
+# Real Estate Market Signal Agent (MVP)
+
 A scheduled, deterministic market-monitoring system for the **Minneapolis–Saint Paul (MSP) North Metro** housing segment. The project treats residential listings as a high-frequency proxy for local housing market tightness, pricing pressure, and short-run regime shifts.
 
 Rather than building a conversational interface, this repository implements a compact empirical pipeline:

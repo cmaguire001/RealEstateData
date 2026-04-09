@@ -6,16 +6,20 @@
     <title>MSP North Metro Market Signals</title>
     <style>
       body { font-family: Arial, sans-serif; margin: 24px; color: #222; }
-      .meta { margin-bottom: 16px; }
+      .meta { margin-bottom: 16px; display: grid; gap: 8px; max-width: 320px; }
       .grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1000px; }
       .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
       canvas { width: 100%; height: 300px; }
+      select { padding: 6px; }
     </style>
   </head>
   <body>
     <h1>MSP North Metro Market Signals</h1>
     <div class="meta">
-      <div><strong>City:</strong> <span id="city-name">MSP North Metro</span></div>
+      <label>
+        <strong>City:</strong>
+        <select id="city-select"></select>
+      </label>
       <div><strong>Last update:</strong> <span id="last-update">-</span></div>
     </div>
 

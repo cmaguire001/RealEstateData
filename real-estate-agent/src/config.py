@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -17,22 +18,50 @@ class Settings:
     request_retries: int
 
 
+def load_local_env(env_path: str = ".env") -> None:
+    """Load key/value pairs from a local .env file if present.
+
+    Existing environment variables are not overwritten.
+    """
+    path = Path(env_path)
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 def get_settings() -> Settings:
+    load_local_env()
     return Settings(
         database_url=os.getenv("DATABASE_URL"),
         state=os.getenv("STATE", "MN"),
         north_metro_cities=(
-            "Blaine",
-            "Coon Rapids",
             "Andover",
-            "Ham Lake",
             "Anoka",
+            "Big Lake",
+            "Blaine",
             "Champlin",
+            "Coon Rapids",
             "Dayton",
-            "Lino Lakes",
+            "Elk River",
             "Fridley",
+            "Ham Lake",
+            "Lino Lakes",
             "Mounds View",
+            "Nowthen",
+            "Oak Grove",
+            "Ramsey",
             "Spring Lake Park",
+            "Zimmerman",
         ),
         export_path=os.getenv("EXPORT_PATH", "frontend/data.json"),
         request_timeout_seconds=int(os.getenv("REQUEST_TIMEOUT_SECONDS", "10")),
@@ -41,6 +70,7 @@ def get_settings() -> Settings:
 
 
 def configure_logging() -> None:
+    load_local_env()
     level_name = os.getenv("LOG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
     logging.basicConfig(

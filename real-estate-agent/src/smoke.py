@@ -1,4 +1,5 @@
 """Network smoke tests for pyRealtor and Anoka OpenData connectivity."""
+"""Network smoke tests for fetcher connectivity and parse path."""
 
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ def main() -> int:
     city = settings.north_metro_cities[0]
 
     realtor_rows = fetch_city_listings(
+    rows = fetch_city_listings(
         city=city,
         state=settings.state,
         timeout_seconds=settings.request_timeout_seconds,
@@ -39,6 +41,7 @@ def main() -> int:
             indent=2,
         )
     )
+    print(json.dumps({"city": city, "rows": len(rows), "sample": rows[:3]}, indent=2))
     return 0
 
 

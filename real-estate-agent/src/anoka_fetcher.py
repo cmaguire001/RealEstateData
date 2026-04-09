@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -31,6 +32,11 @@ def fetch_anoka_city_records(
     if cached is not None:
         return cached
 
+    """Fetch normalized records from Anoka county ArcGIS layer.
+
+    Returns normalized rows in the same schema expected by transformer:
+    {price, sqft, beds, baths}
+    """
     query_url = f"{LAYER_URL}/query"
     params = {
         "where": f"CITY='{city.upper()}'",
@@ -62,6 +68,25 @@ def fetch_anoka_city_records(
         runtime.set_cache(cache_key, rows)
         runtime.store_raw_dataset("anoka", city, rows)
     return rows
+    for attempt in range(1, retries + 1):
+        try:
+            LOGGER.info("Fetching Anoka OpenData for %s (attempt %s/%s)", city, attempt, retries)
+            payload = _http_get_json(query_url, params=params, timeout_seconds=timeout_seconds)
+            features = payload.get("features", []) if isinstance(payload, dict) else []
+            rows: list[dict[str, Any]] = []
+            for feature in features:
+                attrs = feature.get("attributes", {}) if isinstance(feature, dict) else {}
+                normalized = _normalize_attributes(attrs)
+                if normalized is not None:
+                    rows.append(normalized)
+            return rows
+        except Exception as exc:
+            LOGGER.warning("Anoka OpenData fetch failed for %s: %s", city, exc)
+            if attempt < retries:
+                time.sleep(float(attempt))
+
+    LOGGER.error("All Anoka OpenData retries exhausted for %s", city)
+    return []
 
 
 def fetch_anoka_fields(timeout_seconds: int = 15) -> list[dict[str, Any]]:
@@ -111,6 +136,11 @@ def _normalize_attributes(attrs: dict[str, Any]) -> dict[str, Any] | None:
     beds = _to_int(_pick_first(attrs, ["BEDS", "BEDROOMS", "BR"])) or 0
     baths = _to_float(_pick_first(attrs, ["BATHS", "BATHROOMS", "BA"])) or 0.0
 
+    # Beds/baths are optional in county records; provide safe defaults.
+    beds = _to_int(_pick_first(attrs, ["BEDS", "BEDROOMS", "BR"])) or 0
+    baths = _to_float(_pick_first(attrs, ["BATHS", "BATHROOMS", "BA"])) or 0.0
+
+    # Preserve pipeline compatibility: sqft must be >0 for ppsf. If missing, skip row.
     if sqft is None or sqft <= 0:
         return None
 

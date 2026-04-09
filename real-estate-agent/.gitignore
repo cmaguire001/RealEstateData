@@ -5,3 +5,6 @@ __pycache__/
 !.env.example
 .cache/
 data/local_store/
+
+__pycache__/
+*.pyc

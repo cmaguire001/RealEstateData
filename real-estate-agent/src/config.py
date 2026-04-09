@@ -16,6 +16,8 @@ class Settings:
     export_path: str
     request_timeout_seconds: int
     request_retries: int
+    use_anoka_open_data: bool
+    production_scraper_mode: bool
 
 
 def load_local_env(env_path: str = ".env") -> None:
@@ -37,6 +39,12 @@ def load_local_env(env_path: str = ".env") -> None:
         value = value.strip().strip('"').strip("'")
         if key and key not in os.environ:
             os.environ[key] = value
+
+
+def _to_bool(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def get_settings() -> Settings:
@@ -66,6 +74,8 @@ def get_settings() -> Settings:
         export_path=os.getenv("EXPORT_PATH", "frontend/data.json"),
         request_timeout_seconds=int(os.getenv("REQUEST_TIMEOUT_SECONDS", "10")),
         request_retries=int(os.getenv("REQUEST_RETRIES", "3")),
+        use_anoka_open_data=_to_bool(os.getenv("USE_ANOKA_OPEN_DATA"), default=True),
+        production_scraper_mode=_to_bool(os.getenv("PRODUCTION_SCRAPER_MODE"), default=True),
     )
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from anoka_fetcher import fetch_anoka_city_records
 from config import configure_logging, get_settings
 from db import get_history_totals, init_db, insert_snapshot
 from exporter import export_history_json
@@ -35,6 +36,15 @@ def run() -> int:
                 timeout_seconds=settings.request_timeout_seconds,
                 retries=settings.request_retries,
             )
+
+            if settings.use_anoka_open_data and not listings:
+                LOGGER.info("Falling back to Anoka OpenData for %s", city)
+                listings = fetch_anoka_city_records(
+                    city=city,
+                    timeout_seconds=max(settings.request_timeout_seconds, 15),
+                    retries=settings.request_retries,
+                )
+
             if not listings:
                 LOGGER.warning("No listings fetched for %s; skipping snapshot insert.", city)
                 continue
